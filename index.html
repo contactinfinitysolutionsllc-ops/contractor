@@ -481,7 +481,7 @@ footer a{color:var(--accent2);text-decoration:none}
 
     <div class="agree-row" id="agree-1" onclick="toggleAgree('agree-1')">
       <div class="agree-check" id="check-1"></div>
-      <div class="agree-text">I have read and agree to the <strong>Platform Agreement</strong> above, including the dispute resolution terms and limitation of liability.</div>
+      <div class="agree-text">I have read and agree to the <strong>Platform Agreement</strong> above and the <a href="https://contactinfinitysolutionsllc-ops.github.io/terms/" target="_blank" style="color:var(--accent2)">Terms of Service</a>, including the dispute resolution terms and limitation of liability.</div>
     </div>
     <div style="height:8px"></div>
     <div class="agree-row" id="agree-2" onclick="toggleAgree('agree-2')">
@@ -490,8 +490,17 @@ footer a{color:var(--accent2);text-decoration:none}
     </div>
     <div style="height:8px"></div>
     <div class="agree-row" id="agree-3" onclick="toggleAgree('agree-3')">
-      <div class="agree-check" id="check-2"></div>
+      <div class="agree-check" id="check-3"></div>
       <div class="agree-text">I understand that <strong>disputes are between me and the homeowner</strong> and that InfinityMatch is not responsible for project outcomes.</div>
+    </div>
+
+    <!-- TYPED SIGNATURE -->
+    <div style="margin-top:1.2rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.1rem">
+      <div style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;margin-bottom:.5rem;color:var(--muted2)">Digital Signature</div>
+      <p style="font-size:.75rem;color:var(--muted);margin-bottom:.7rem;line-height:1.5">Type your full legal name below to sign this agreement. This constitutes a legally binding electronic signature under the E-SIGN Act.</p>
+      <input type="text" class="fi" id="f-signature" placeholder="Type your full legal name to sign"
+        style="font-style:italic;font-size:1rem;font-family:'Instrument Sans',sans-serif;letter-spacing:.02em">
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.4rem" id="sig-timestamp"></div>
     </div>
 
     <div class="btn-row">
@@ -618,6 +627,9 @@ function validateStep(n) {
   if (n === 4) {
     if (!agreements['agree-1'] || !agreements['agree-2'] || !agreements['agree-3'])
       return showErr('msg-4', 'Please read and agree to all three items before continuing.');
+    const sig = document.getElementById('f-signature').value.trim();
+    if (!sig || sig.length < 3)
+      return showErr('msg-4', 'Please type your full legal name to sign the agreement.');
   }
   return true;
 }
@@ -752,6 +764,10 @@ async function startPayment() {
   const email = document.getElementById('f-pay-email').value.trim();
   if (!email || !email.includes('@')) { showMsg('msg-5','Please confirm your email.','error'); return; }
 
+  // Save signature before redirecting
+  const sigValue = document.getElementById('f-signature')?.value?.trim() || '';
+  if (sigValue) localStorage.setItem('contractor_signature', sigValue);
+
   // Save all form data to localStorage so we can restore it after Square redirect
   const appData = {
     name:         document.getElementById('f-name').value.trim(),
@@ -826,10 +842,30 @@ async function handlePaidReturn() {
     });
   } catch(e) {}
 
+  // Record the digital signature / agreement
+  const savedSig  = localStorage.getItem('contractor_signature') || '';
+  const savedEmail = app.email || '';
+  if (savedSig && savedEmail) {
+    await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:             'recordAgreement',
+        agreement_type:     'contractor',
+        agreement_version:  '2025-01-01',
+        full_name:          savedSig,
+        email:              savedEmail,
+        user_agent:         navigator.userAgent,
+        agreement_text:     'Contractor Platform Agreement + Terms of Service v2025-01-01'
+      })
+    }).catch(() => {});
+  }
+
   // Clean up
   localStorage.removeItem('contractor_pending');
   localStorage.removeItem('contractor_lic_doc');
   localStorage.removeItem('contractor_coi_doc');
+  localStorage.removeItem('contractor_signature');
 
   // Show success
   showSuccess();
@@ -845,6 +881,20 @@ function showSuccess() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+  // Show timestamp when contractor types their name - makes it feel official
+  const sigField = document.getElementById('f-signature');
+  if (sigField) {
+    sigField.addEventListener('input', () => {
+      const ts = document.getElementById('sig-timestamp');
+      if (sigField.value.trim().length > 0) {
+        ts.textContent = 'Signing as: ' + sigField.value.trim() + ' · ' + new Date().toLocaleString();
+      } else {
+        ts.textContent = '';
+      }
+    });
+  }
+
+
   if (window.location.search.includes('paid=true')) {
     window.history.replaceState({}, '', window.location.pathname);
     handlePaidReturn();
