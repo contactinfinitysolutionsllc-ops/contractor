@@ -1,4 +1,4 @@
-<!-- Copyright 2025 Infinity Solutions LLC. All Rights Reserved. -->
+<!-- Copyright 2026 Infinity Solutions LLC. All Rights Reserved. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -569,14 +569,15 @@ footer a{color:var(--accent2);text-decoration:none}
 </div>
 
 <footer>
-  <p>© 2025 <a href="https://infinityhub.dev">Infinity Solutions LLC</a> · <a href="https://contact.infinityhub.dev">Support</a> · <a href="https://contactinfinitysolutionsllc-ops.github.io/infinitymatch-submit/">Post a project</a></p>
+  <p>© 2026 <a href="https://infinityhub.dev">Infinity Solutions LLC</a> · <a href="https://contact.infinityhub.dev">Support</a> · <a href="https://contactinfinitysolutionsllc-ops.github.io/infinitymatch-submit/">Post a project</a></p>
 </footer>
 
 <script>
-const WORKER_URL  = 'https://justdocs-worker.robertjosephreynolds.workers.dev';
-const SB_URL      = 'https://zcvkgevcrgsujnqovxgd.supabase.co';
-const SB_KEY      = 'sb_publishable_WeAsyK0Xo7G-VbhIwFUlNQ_pGNmu75T';
-const PAGE_URL    = 'https://contactinfinitysolutionsllc-ops.github.io/contractor/';
+const WORKER_URL        = 'https://justdocs-worker.robertjosephreynolds.workers.dev';
+const SB_URL            = 'https://zcvkgevcrgsujnqovxgd.supabase.co';
+const SB_KEY            = 'sb_publishable_WeAsyK0Xo7G-VbhIwFUlNQ_pGNmu75T';
+const PAGE_URL          = 'https://contactinfinitysolutionsllc-ops.github.io/contractor/';
+const SQUARE_CONTRACTOR_URL = 'https://square.link/u/WA0weelG';
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let selectedTrades  = [];
@@ -796,28 +797,8 @@ async function startPayment() {
   const txt  = document.getElementById('btn-pay-text');
   btn.disabled = true; spin.style.display = 'inline-block'; txt.textContent = 'Redirecting to payment…';
 
-  try {
-    const res = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action:      'createPaymentLink',
-        docType:     'InfinityMatch Contractor Subscription',
-        amount:      49.00,
-        redirectUrl: PAGE_URL + '?paid=true'
-      })
-    });
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      showMsg('msg-5', 'Could not create payment link. Please try again.', 'error');
-      btn.disabled = false; spin.style.display = 'none'; txt.textContent = 'Subscribe & Submit Application →';
-    }
-  } catch(e) {
-    showMsg('msg-5', 'Network error. Please try again.', 'error');
-    btn.disabled = false; spin.style.display = 'none'; txt.textContent = 'Subscribe & Submit Application →';
-  }
+  // Redirect to Square subscription plan
+  window.location.href = SQUARE_CONTRACTOR_URL;
 }
 
 // ── HANDLE RETURN FROM SQUARE ─────────────────────────────────────────────
@@ -854,7 +835,7 @@ async function handlePaidReturn() {
       body: JSON.stringify({
         action:             'recordAgreement',
         agreement_type:     'contractor',
-        agreement_version:  '2025-01-01',
+        agreement_version:  '2026-04-18',
         full_name:          savedSig,
         email:              savedEmail,
         user_agent:         navigator.userAgent,
